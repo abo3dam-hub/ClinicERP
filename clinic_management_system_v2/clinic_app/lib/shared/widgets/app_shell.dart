@@ -28,7 +28,7 @@ const _navItems = [
   _NavItem(label: 'الفواتير',      icon: Icons.receipt_long_outlined,           activeIcon: Icons.receipt_long,           route: '/invoices'),
   _NavItem(label: 'المصروفات',     icon: Icons.payments_outlined,               activeIcon: Icons.payments,               route: '/expenses'),
   _NavItem(label: 'المخزون',       icon: Icons.inventory_2_outlined,            activeIcon: Icons.inventory_2,            route: '/inventory'),
-  _NavItem(label: 'الصندوق',       icon: Icons.account_balance_wallet_outlined, activeIcon: Icons.account_balance_wallet, route: '/cash-box'),
+  _NavItem(label: 'الخزينة',       icon: Icons.account_balance_wallet_outlined, activeIcon: Icons.account_balance_wallet, route: '/cash-box'),
   _NavItem(label: 'التقارير',      icon: Icons.bar_chart_outlined,              activeIcon: Icons.bar_chart,              route: '/reports'),
 ];
 
