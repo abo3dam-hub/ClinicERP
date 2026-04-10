@@ -13,8 +13,8 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final today   = ClinicDateUtils.todayString();
-    final daily   = ref.watch(dailyReportProvider(today));
+    final today = ClinicDateUtils.todayString();
+    final daily = ref.watch(dailyReportProvider(today));
     final cashBox = ref.watch(cashBoxTodayProvider);
 
     return SingleChildScrollView(
@@ -22,7 +22,6 @@ class DashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // ── Greeting ──────────────────────────────────────────
           _Greeting(),
           const SizedBox(height: AppSpacing.lg),
@@ -30,15 +29,15 @@ class DashboardScreen extends ConsumerWidget {
           // ── Stats grid (responsive) ───────────────────────────
           daily.when(
             loading: () => const LoadingView(),
-            error:   (e, _) => ErrorView(message: e.toString()),
-            data:    (report) => _StatsGrid(report: report),
+            error: (e, _) => ErrorView(message: e.toString()),
+            data: (report) => _StatsGrid(report: report),
           ),
           const SizedBox(height: AppSpacing.lg),
 
           // ── Cash box + Doctor stats ───────────────────────────
           daily.when(
             loading: () => const SizedBox.shrink(),
-            error:   (_, __) => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
             data: (report) => _BottomRow(
               cashBoxAsync: cashBox,
               report: report,
@@ -58,15 +57,19 @@ class DashboardScreen extends ConsumerWidget {
 class _Greeting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final hour  = DateTime.now().hour;
-    final greet = hour < 12 ? 'صباح الخير' : hour < 17 ? 'مساء الخير' : 'مساء النور';
-    final fmt   = DateFormat('EEEE، d MMMM yyyy', 'ar');
+    final hour = DateTime.now().hour;
+    final greet = hour < 12
+        ? 'صباح الخير'
+        : hour < 17
+            ? 'مساء الخير'
+            : 'مساء النور';
+    final fmt = DateFormat('EEEE، d MMMM yyyy', 'ar');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(greet,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppColors.primary, fontWeight: FontWeight.w700)),
+                color: AppColors.primary, fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
         Text(fmt.format(DateTime.now()),
             style: Theme.of(context)
@@ -101,19 +104,19 @@ class _StatsGrid extends StatelessWidget {
       ),
       StatCard(
         label: 'إجمالي الفواتير',
-        value: '${fmt.format(report.totalInvoiced)} $',
+        value: '${fmt.format(report.totalInvoiced)} USD',
         icon: Icons.receipt_long_outlined,
         color: AppColors.secondary,
       ),
       StatCard(
         label: 'المحصّل اليوم',
-        value: '${fmt.format(report.totalCollected)} $',
+        value: '${fmt.format(report.totalCollected)} USD',
         icon: Icons.payments_outlined,
         color: AppColors.success,
       ),
       StatCard(
         label: 'صافي الخزينة',
-        value: '${fmt.format(report.netCash)} $',
+        value: '${fmt.format(report.netCash)} USD',
         icon: Icons.account_balance_wallet_outlined,
         color: report.netCash >= 0 ? AppColors.primary : AppColors.error,
       ),
@@ -121,8 +124,10 @@ class _StatsGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossCount  = constraints.maxWidth < 600 ? 2 : 4;
-        final cellWidth   = (constraints.maxWidth - (crossCount - 1) * AppSpacing.md) / crossCount;
+        final crossCount = constraints.maxWidth < 600 ? 2 : 4;
+        final cellWidth =
+            (constraints.maxWidth - (crossCount - 1) * AppSpacing.md) /
+                crossCount;
         // Keep cards at a comfortable fixed height regardless of width
         final aspectRatio = (cellWidth / 110).clamp(1.6, 3.0);
 
@@ -167,7 +172,9 @@ class _BottomRow extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _CashBoxCard(cashBoxAsync: cashBoxAsync, report: report)),
+            Expanded(
+                child:
+                    _CashBoxCard(cashBoxAsync: cashBoxAsync, report: report)),
             const SizedBox(width: AppSpacing.md),
             Expanded(child: _DoctorStatsCard(report: report)),
           ],
@@ -195,18 +202,24 @@ class _CashBoxCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           cashBoxAsync.when(
             loading: () => const LoadingView(),
-            error:   (e, _) => ErrorView(message: e.toString()),
+            error: (e, _) => ErrorView(message: e.toString()),
             data: (box) => Column(
               children: [
-                _CashRow('الرصيد الافتتاحي', fmt.format(box.openingBalance),                AppColors.textSecondary),
-                _CashRow('إجمالي الإيرادات', fmt.format(report.totalCollected),             AppColors.success),
-                _CashRow('إجمالي المصروفات', fmt.format(report.totalExpenses),              AppColors.error),
+                _CashRow('الرصيد الافتتاحي', fmt.format(box.openingBalance),
+                    AppColors.textSecondary),
+                _CashRow('إجمالي الإيرادات', fmt.format(report.totalCollected),
+                    AppColors.success),
+                _CashRow('إجمالي المصروفات', fmt.format(report.totalExpenses),
+                    AppColors.error),
                 const Divider(height: AppSpacing.lg),
-                _CashRow('الرصيد الختامي',   fmt.format(box.calculatedClosingBalance),      AppColors.primary, bold: true),
+                _CashRow('الرصيد الختامي',
+                    fmt.format(box.calculatedClosingBalance), AppColors.primary,
+                    bold: true),
                 if (box.isClosed)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: StatusChip(label: 'الخزينة مغلقة', color: AppColors.textHint),
+                    child: StatusChip(
+                        label: 'الخزينة مغلقة', color: AppColors.textHint),
                   ),
               ],
             ),
@@ -232,10 +245,11 @@ class _CashRow extends StatelessWidget {
           children: [
             Text(label,
                 style: TextStyle(
-                    color: bold ? AppColors.textPrimary : AppColors.textSecondary,
+                    color:
+                        bold ? AppColors.textPrimary : AppColors.textSecondary,
                     fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
                     fontSize: 14)),
-            Text('$value $',
+            Text('$value USD',
                 style: TextStyle(
                     color: color,
                     fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
@@ -299,12 +313,14 @@ class _DoctorRow extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 36, height: 36,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: AppColors.primarySurface,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.person, color: AppColors.primary, size: 18),
+              child:
+                  const Icon(Icons.person, color: AppColors.primary, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -312,20 +328,25 @@ class _DoctorRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(name,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14)),
                   Text('$visits زيارة',
-                      style: const TextStyle(color: AppColors.textHint, fontSize: 12)),
+                      style: const TextStyle(
+                          color: AppColors.textHint, fontSize: 12)),
                 ],
               ),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('$revenue $',
+                Text('$revenue USD',
                     style: const TextStyle(
-                        color: AppColors.success, fontWeight: FontWeight.w700, fontSize: 14)),
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14)),
                 Text('عمولة: $commission',
-                    style: const TextStyle(color: AppColors.textHint, fontSize: 11)),
+                    style: const TextStyle(
+                        color: AppColors.textHint, fontSize: 11)),
               ],
             ),
           ],
