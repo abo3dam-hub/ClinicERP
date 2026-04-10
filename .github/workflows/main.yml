@@ -24,15 +24,25 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Install Dependencies
-        run: flutter pub get
-
       - name: Enable Windows Desktop
         run: flutter config --enable-windows-desktop
 
-      # === الخطوة السحرية الجديدة: السيرفر سينشئ مجلد الويندوز تلقائياً ===
+      # مسح أي مجلد ويندوز قديم ومضروب لتجنب التعارض
+      - name: Remove Corrupted Windows Folder
+        run: if (Test-Path windows) { Remove-Item -Recurse -Force windows }
+        shell: powershell
+
+      # إنشاء مجلد ويندوز جديد ونظيف
       - name: Create Windows Project
         run: flutter create --platforms=windows .
+        
+      # تنظيف الكاش الخاص بالمشروع
+      - name: Clean Project
+        run: flutter clean
+
+      # جلب المكاتب (الآن سيتم ربطها بنجاح مع مجلد الويندوز)
+      - name: Install Dependencies
+        run: flutter pub get
 
       - name: Build Windows App
         run: flutter build windows --release
