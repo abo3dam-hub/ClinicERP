@@ -8,7 +8,13 @@ on:
 jobs:
   build:
     name: Build Flutter Windows
-    runs-on: windows-latest
+        runs-on: windows-latest
+    
+    # ضيف هدول السطرين (استبدل my_folder_name باسم المجلد تبعك)
+    defaults:
+      run:
+        working-directory: ./clinic_app
+        
 
     steps:
       - name: Checkout Repository
