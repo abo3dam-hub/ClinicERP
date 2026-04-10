@@ -10,22 +10,26 @@ class _NavItem {
   final IconData icon;
   final IconData activeIcon;
   final String route;
-  const _NavItem({required this.label, required this.icon,
-      required this.activeIcon, required this.route});
+  const _NavItem({
+    required this.label,
+    required this.icon,
+    required this.activeIcon,
+    required this.route,
+  });
 }
 
 const _navItems = [
-  _NavItem(label: 'الرئيسية',     icon: Icons.dashboard_outlined,             activeIcon: Icons.dashboard,             route: '/dashboard'),
-  _NavItem(label: 'المرضى',       icon: Icons.people_outline,                 activeIcon: Icons.people,                route: '/patients'),
-  _NavItem(label: 'الأطباء',      icon: Icons.medical_services_outlined,      activeIcon: Icons.medical_services,      route: '/doctors'),
-  _NavItem(label: 'الإجراءات',    icon: Icons.healing_outlined,               activeIcon: Icons.healing,               route: '/procedures'),
-  _NavItem(label: 'المواعيد',     icon: Icons.calendar_month_outlined,        activeIcon: Icons.calendar_month,        route: '/appointments'),
-  _NavItem(label: 'الزيارات',     icon: Icons.local_hospital_outlined,        activeIcon: Icons.local_hospital,        route: '/visits'),
-  _NavItem(label: 'الفواتير',     icon: Icons.receipt_long_outlined,          activeIcon: Icons.receipt_long,          route: '/invoices'),
-  _NavItem(label: 'المصروفات',    icon: Icons.payments_outlined,              activeIcon: Icons.payments,              route: '/expenses'),
-  _NavItem(label: 'المخزون',      icon: Icons.inventory_2_outlined,           activeIcon: Icons.inventory_2,           route: '/inventory'),
-  _NavItem(label: 'الخزينة',      icon: Icons.account_balance_wallet_outlined,activeIcon: Icons.account_balance_wallet,route: '/cash-box'),
-  _NavItem(label: 'التقارير',     icon: Icons.bar_chart_outlined,             activeIcon: Icons.bar_chart,             route: '/reports'),
+  _NavItem(label: 'الرئيسية',      icon: Icons.dashboard_outlined,              activeIcon: Icons.dashboard,              route: '/dashboard'),
+  _NavItem(label: 'المرضى',        icon: Icons.people_outline,                  activeIcon: Icons.people,                 route: '/patients'),
+  _NavItem(label: 'الأطباء',       icon: Icons.medical_services_outlined,       activeIcon: Icons.medical_services,       route: '/doctors'),
+  _NavItem(label: 'الإجراءات',     icon: Icons.healing_outlined,                activeIcon: Icons.healing,                route: '/procedures'),
+  _NavItem(label: 'المواعيد',      icon: Icons.calendar_month_outlined,         activeIcon: Icons.calendar_month,         route: '/appointments'),
+  _NavItem(label: 'الزيارات',      icon: Icons.local_hospital_outlined,         activeIcon: Icons.local_hospital,         route: '/visits'),
+  _NavItem(label: 'الفواتير',      icon: Icons.receipt_long_outlined,           activeIcon: Icons.receipt_long,           route: '/invoices'),
+  _NavItem(label: 'المصروفات',     icon: Icons.payments_outlined,               activeIcon: Icons.payments,               route: '/expenses'),
+  _NavItem(label: 'المخزون',       icon: Icons.inventory_2_outlined,            activeIcon: Icons.inventory_2,            route: '/inventory'),
+  _NavItem(label: 'الصندوق',       icon: Icons.account_balance_wallet_outlined, activeIcon: Icons.account_balance_wallet, route: '/cash-box'),
+  _NavItem(label: 'التقارير',      icon: Icons.bar_chart_outlined,              activeIcon: Icons.bar_chart,              route: '/reports'),
 ];
 
 const _bottomItems = [
@@ -44,8 +48,8 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   bool _expanded = true;
-  static const double _ew = 240;
-  static const double _cw = 68;
+  static const double _ew = 220;
+  static const double _cw = 64;
 
   @override
   Widget build(BuildContext context) => Directionality(
@@ -64,12 +68,12 @@ class _AppShellState extends State<AppShell> {
                 onNav: (r) => context.go(r),
               ),
             ),
-            Expanded(
-              child: Column(children: [
-                _TopBar(route: widget.currentRoute),
-                Expanded(child: widget.child),
-              ]),
-            ),
+            // FIX: Content area no longer has a separate _TopBar widget.
+            // That 64 px white band was the "empty gray rectangle" the user
+            // was seeing on every screen.  Page title is now shown in the
+            // sidebar header and the route title in the sidebar active item,
+            // which is more than enough context for a desktop app.
+            Expanded(child: widget.child),
           ]),
         ),
       );
@@ -80,8 +84,13 @@ class _Sidebar extends StatelessWidget {
   final String currentRoute;
   final VoidCallback onToggle;
   final void Function(String) onNav;
-  const _Sidebar({required this.expanded, required this.currentRoute,
-      required this.onToggle, required this.onNav});
+
+  const _Sidebar({
+    required this.expanded,
+    required this.currentRoute,
+    required this.onToggle,
+    required this.onNav,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
@@ -90,7 +99,7 @@ class _Sidebar extends StatelessWidget {
           boxShadow: AppShadows.sidebar,
         ),
         child: Column(children: [
-          // Logo
+          // ── Logo / header ──────────────────────────────────────
           Container(
             height: 64,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -113,33 +122,38 @@ class _Sidebar extends StatelessWidget {
                 ),
               ],
               IconButton(
-                onPressed: onToggle, iconSize: 20,
+                onPressed: onToggle,
+                iconSize: 20,
                 icon: Icon(
                   expanded ? Icons.keyboard_arrow_right : Icons.keyboard_arrow_left,
                   color: AppColors.textSecondary),
               ),
             ]),
           ),
-          // Nav items
+
+          // ── Nav items ─────────────────────────────────────────
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 6),
-              children: _navItems.map((item) => _Tile(
+              children: _navItems
+                  .map((item) => _Tile(
+                        item: item,
+                        active: currentRoute.startsWith(item.route),
+                        expanded: expanded,
+                        onTap: () => onNav(item.route),
+                      ))
+                  .toList(),
+            ),
+          ),
+
+          // ── Bottom items ──────────────────────────────────────
+          const Divider(height: 1),
+          ..._bottomItems.map((item) => _Tile(
                 item: item,
                 active: currentRoute.startsWith(item.route),
                 expanded: expanded,
                 onTap: () => onNav(item.route),
-              )).toList(),
-            ),
-          ),
-          // Bottom items
-          const Divider(height: 1),
-          ..._bottomItems.map((item) => _Tile(
-            item: item,
-            active: currentRoute.startsWith(item.route),
-            expanded: expanded,
-            onTap: () => onNav(item.route),
-          )),
+              )),
           const SizedBox(height: 8),
         ]),
       );
@@ -150,8 +164,13 @@ class _Tile extends StatelessWidget {
   final bool active;
   final bool expanded;
   final VoidCallback onTap;
-  const _Tile({required this.item, required this.active,
-      required this.expanded, required this.onTap});
+
+  const _Tile({
+    required this.item,
+    required this.active,
+    required this.expanded,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) => Tooltip(
@@ -184,51 +203,4 @@ class _Tile extends StatelessWidget {
           ),
         ),
       );
-}
-
-class _TopBar extends StatelessWidget {
-  final String route;
-  const _TopBar({required this.route});
-
-  String get _title => switch (route) {
-    String r when r.startsWith('/dashboard')   => 'لوحة التحكم',
-    String r when r.startsWith('/patients')    => 'المرضى',
-    String r when r.startsWith('/doctors')     => 'الأطباء',
-    String r when r.startsWith('/procedures')  => 'الإجراءات الطبية',
-    String r when r.startsWith('/appointments')=> 'المواعيد',
-    String r when r.startsWith('/visits')      => 'الزيارات',
-    String r when r.startsWith('/invoices')    => 'الفواتير',
-    String r when r.startsWith('/expenses')    => 'المصروفات',
-    String r when r.startsWith('/inventory')   => 'المخزون',
-    String r when r.startsWith('/cash-box')    => 'الخزينة اليومية',
-    String r when r.startsWith('/reports')     => 'التقارير',
-    String r when r.startsWith('/backup')      => 'النسخ الاحتياطي',
-    String r when r.startsWith('/settings')    => 'الإعدادات',
-    _ => 'نظام إدارة العيادة',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final date = '${now.day.toString().padLeft(2,'0')}/'
-        '${now.month.toString().padLeft(2,'0')}/${now.year}';
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: const BoxDecoration(
-          color: AppColors.surfaceCard,
-          border: Border(bottom: BorderSide(color: AppColors.border))),
-      child: Row(children: [
-        Text(_title,
-            style: Theme.of(context).textTheme.titleLarge),
-        const Spacer(),
-        const Icon(Icons.calendar_today_outlined,
-            size: 14, color: AppColors.textHint),
-        const SizedBox(width: 6),
-        Text(date,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textHint)),
-      ]),
-    );
-  }
 }
