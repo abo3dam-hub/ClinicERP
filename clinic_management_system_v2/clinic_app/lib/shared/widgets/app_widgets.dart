@@ -31,8 +31,7 @@ class PrimaryButton extends StatelessWidget {
         ? const SizedBox(
             width: 18,
             height: 18,
-            child:
-                CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
           )
         : icon != null
             ? Row(
@@ -56,8 +55,6 @@ class PrimaryButton extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────
 
 class SecondaryButton extends StatelessWidget {
   final String label;
@@ -98,19 +95,12 @@ class SecondaryButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-
 class DangerButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
 
-  const DangerButton({
-    super.key,
-    required this.label,
-    this.onPressed,
-    this.icon,
-  });
+  const DangerButton({super.key, required this.label, this.onPressed, this.icon});
 
   @override
   Widget build(BuildContext context) => ElevatedButton(
@@ -123,17 +113,11 @@ class DangerButton extends StatelessWidget {
         child: icon != null
             ? Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: 18),
-                  const SizedBox(width: 8),
-                  Text(label)
-                ],
+                children: [Icon(icon, size: 18), const SizedBox(width: 8), Text(label)],
               )
             : Text(label),
       );
 }
-
-// ─────────────────────────────────────────────────────────────
 
 class IconActionButton extends StatelessWidget {
   final IconData icon;
@@ -163,8 +147,7 @@ class IconActionButton extends StatelessWidget {
               color: bgColor ?? AppColors.borderLight,
               borderRadius: BorderRadius.circular(8),
             ),
-            child:
-                Icon(icon, size: 18, color: color ?? AppColors.textSecondary),
+            child: Icon(icon, size: 18, color: color ?? AppColors.textSecondary),
           ),
         ),
       );
@@ -180,13 +163,7 @@ class AppCard extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? color;
 
-  const AppCard({
-    super.key,
-    required this.child,
-    this.padding,
-    this.onTap,
-    this.color,
-  });
+  const AppCard({super.key, required this.child, this.padding, this.onTap, this.color});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -211,8 +188,6 @@ class AppCard extends StatelessWidget {
               ),
       );
 }
-
-// ─────────────────────────────────────────────────────────────
 
 class StatCard extends StatelessWidget {
   final String label;
@@ -248,21 +223,22 @@ class StatCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textHint,
-                          )),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: AppColors.textHint)),
                   const SizedBox(height: 4),
                   Text(value,
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                              )),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          )),
                   if (subtitle != null)
                     Text(subtitle!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
-                            )),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -319,8 +295,7 @@ class AppTextField extends StatelessWidget {
                       .labelLarge
                       ?.copyWith(fontSize: 13, color: AppColors.textSecondary)),
               if (required)
-                const Text(' *',
-                    style: TextStyle(color: AppColors.error, fontSize: 13)),
+                const Text(' *', style: TextStyle(color: AppColors.error, fontSize: 13)),
             ],
           ),
           const SizedBox(height: 6),
@@ -342,8 +317,6 @@ class AppTextField extends StatelessWidget {
         ],
       );
 }
-
-// ─────────────────────────────────────────────────────────────
 
 class AppDropdown<T> extends StatelessWidget {
   final String label;
@@ -375,8 +348,7 @@ class AppDropdown<T> extends StatelessWidget {
                       .labelLarge
                       ?.copyWith(fontSize: 13, color: AppColors.textSecondary)),
               if (required)
-                const Text(' *',
-                    style: TextStyle(color: AppColors.error, fontSize: 13)),
+                const Text(' *', style: TextStyle(color: AppColors.error, fontSize: 13)),
             ],
           ),
           const SizedBox(height: 6),
@@ -393,8 +365,13 @@ class AppDropdown<T> extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
+// FIX: AppDateField is now a StatefulWidget.
+// The old version created a new TextEditingController inside
+// every build() call — a serious memory leak and state bug that
+// caused the "black screen" after the date picker closed.
+// ─────────────────────────────────────────────────────────────
 
-class AppDateField extends StatelessWidget {
+class AppDateField extends StatefulWidget {
   final String label;
   final String? value;
   final void Function(String) onChanged;
@@ -409,31 +386,59 @@ class AppDateField extends StatelessWidget {
   });
 
   @override
+  State<AppDateField> createState() => _AppDateFieldState();
+}
+
+class _AppDateFieldState extends State<AppDateField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value ?? '');
+  }
+
+  @override
+  void didUpdateWidget(AppDateField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Keep controller in sync when parent pushes a new value (edit mode)
+    if (oldWidget.value != widget.value && _controller.text != (widget.value ?? '')) {
+      _controller.text = widget.value ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = TextEditingController(text: value ?? '');
     return AppTextField(
-      label: label,
-      controller: controller,
+      label: widget.label,
+      controller: _controller,
       readOnly: true,
-      required: required,
+      required: widget.required,
       suffix: const Icon(Icons.calendar_today_outlined,
           size: 18, color: AppColors.textSecondary),
       onTap: () async {
         final picked = await showDatePicker(
           context: context,
-          initialDate: value != null
-              ? DateTime.tryParse(value!) ?? DateTime.now()
+          initialDate: widget.value != null
+              ? DateTime.tryParse(widget.value!) ?? DateTime.now()
               : DateTime.now(),
-          firstDate: DateTime(2000),
+          firstDate: DateTime(1920),
           lastDate: DateTime(2100),
           locale: const Locale('ar'),
         );
-        if (picked != null) {
-          final formatted = '${picked.year.toString().padLeft(4, '0')}-'
+        if (picked != null && mounted) {
+          final formatted =
+              '${picked.year.toString().padLeft(4, '0')}-'
               '${picked.month.toString().padLeft(2, '0')}-'
               '${picked.day.toString().padLeft(2, '0')}';
-          controller.text = formatted;
-          onChanged(formatted);
+          _controller.text = formatted;
+          widget.onChanged(formatted);
         }
       },
     );
@@ -457,20 +462,13 @@ class StatusChip extends StatelessWidget {
           color: color.withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: Text(label,
+            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
       );
 }
 
 class InvoiceStatusChip extends StatelessWidget {
   final String status;
-
   const InvoiceStatusChip({super.key, required this.status});
 
   @override
@@ -512,12 +510,7 @@ class AppTable extends StatelessWidget {
   final List<List<Widget>> rows;
   final List<double>? columnWidths;
 
-  const AppTable({
-    super.key,
-    required this.headers,
-    required this.rows,
-    this.columnWidths,
-  });
+  const AppTable({super.key, required this.headers, required this.rows, this.columnWidths});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -530,29 +523,24 @@ class AppTable extends StatelessWidget {
           borderRadius: AppRadius.card,
           child: Column(
             children: [
-              // Header row
               Container(
                 color: AppColors.primarySurface,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: _buildRow(
                   headers
                       .map((h) => Text(h,
                           style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          )))
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13)))
                       .toList(),
                 ),
               ),
-              // Data rows
               ...rows.asMap().entries.map((entry) {
                 final isEven = entry.key.isEven;
                 return Container(
                   color: isEven ? Colors.transparent : AppColors.borderLight,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: _buildRow(entry.value),
                 );
               }),
@@ -571,12 +559,9 @@ class AppTable extends StatelessWidget {
 
   Widget _buildRow(List<Widget> cells) => Row(
         children: cells.asMap().entries.map((e) {
-          final width = columnWidths != null && e.key < columnWidths!.length
-              ? columnWidths![e.key]
-              : null;
-          return width != null
-              ? SizedBox(width: width, child: e.value)
-              : Expanded(child: e.value);
+          final width =
+              columnWidths != null && e.key < columnWidths!.length ? columnWidths![e.key] : null;
+          return width != null ? SizedBox(width: width, child: e.value) : Expanded(child: e.value);
         }).toList(),
       );
 }
@@ -610,8 +595,6 @@ class SectionHeader extends StatelessWidget {
       );
 }
 
-// ─────────────────────────────────────────────────────────────
-
 class EmptyState extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -627,43 +610,44 @@ class EmptyState extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 56, color: AppColors.textHint),
-            const SizedBox(height: AppSpacing.md),
-            Text(title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    )),
-            if (subtitle != null) ...[
-              const SizedBox(height: 6),
-              Text(subtitle!,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 56, color: AppColors.textHint),
+              const SizedBox(height: AppSpacing.md),
+              Text(title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: AppColors.textSecondary)),
+              if (subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(subtitle!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center),
+              ],
+              if (action != null) ...[
+                const SizedBox(height: AppSpacing.lg),
+                action!,
+              ],
             ],
-            if (action != null) ...[
-              const SizedBox(height: AppSpacing.lg),
-              action!,
-            ],
-          ],
+          ),
         ),
       );
 }
-
-// ─────────────────────────────────────────────────────────────
 
 class LoadingView extends StatelessWidget {
   const LoadingView({super.key});
 
   @override
-  Widget build(BuildContext context) => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.all(AppSpacing.xl),
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
 }
-
-// ─────────────────────────────────────────────────────────────
 
 class ErrorView extends StatelessWidget {
   final String message;
@@ -690,8 +674,6 @@ class ErrorView extends StatelessWidget {
       );
 }
 
-// ─────────────────────────────────────────────────────────────
-
 class ConfirmDialog extends StatelessWidget {
   final String title;
   final String message;
@@ -715,7 +697,8 @@ class ConfirmDialog extends StatelessWidget {
   }) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (_) => ConfirmDialog(
+      barrierDismissible: true,
+      builder: (dialogContext) => ConfirmDialog(
         title: title,
         message: message,
         confirmLabel: confirmLabel,
@@ -731,23 +714,21 @@ class ConfirmDialog extends StatelessWidget {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text('إلغاء'),
           ),
           isDanger
               ? DangerButton(
                   label: confirmLabel,
-                  onPressed: () => Navigator.pop(context, true),
+                  onPressed: () => Navigator.of(context).pop(true),
                 )
               : PrimaryButton(
                   label: confirmLabel,
-                  onPressed: () => Navigator.pop(context, true),
+                  onPressed: () => Navigator.of(context).pop(true),
                 ),
         ],
       );
 }
-
-// ─────────────────────────────────────────────────────────────
 
 void showSnack(BuildContext context, String msg, {bool error = false}) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
