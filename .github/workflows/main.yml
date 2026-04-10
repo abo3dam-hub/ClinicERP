@@ -30,6 +30,10 @@ jobs:
       - name: Enable Windows Desktop
         run: flutter config --enable-windows-desktop
 
+      # === الخطوة السحرية الجديدة: السيرفر سينشئ مجلد الويندوز تلقائياً ===
+      - name: Create Windows Project
+        run: flutter create --platforms=windows .
+
       - name: Build Windows App
         run: flutter build windows --release
 
@@ -37,6 +41,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-app-release
-          # المسار الكامل للملف النهائي بعد البناء
           path: clinic_management_system_v2/clinic_app/build/windows/x64/runner/Release/
           
