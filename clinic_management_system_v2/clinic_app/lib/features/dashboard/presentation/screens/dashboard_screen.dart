@@ -23,31 +23,30 @@ class DashboardScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // ── Greeting ────────────────────────────────────────
+          // ── Greeting ──────────────────────────────────────────
           _Greeting(),
           const SizedBox(height: AppSpacing.lg),
 
-          // ── Daily stats ─────────────────────────────────────
+          // ── Stats grid (responsive) ───────────────────────────
           daily.when(
             loading: () => const LoadingView(),
-            error: (e, _) => ErrorView(message: e.toString()),
-            data: (report) => _StatsGrid(report: report),
+            error:   (e, _) => ErrorView(message: e.toString()),
+            data:    (report) => _StatsGrid(report: report),
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          // ── Two columns: cash box + doctor stats ─────────────
+          // ── Cash box + Doctor stats ───────────────────────────
           daily.when(
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (report) => Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _CashBoxCard(cashBoxAsync: cashBox, report: report)),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: _DoctorStatsCard(report: report)),
-              ],
+            error:   (_, __) => const SizedBox.shrink(),
+            data: (report) => _BottomRow(
+              cashBoxAsync: cashBox,
+              report: report,
             ),
           ),
+
+          // Bottom breathing room
+          const SizedBox(height: AppSpacing.lg),
         ],
       ),
     );
@@ -70,57 +69,110 @@ class _Greeting extends StatelessWidget {
                   color: AppColors.primary, fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
         Text(fmt.format(DateTime.now()),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textHint)),
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: AppColors.textHint)),
       ],
     );
   }
 }
 
-// ─── Stats Grid ───────────────────────────────────────────────
+// ─── Stats Grid (responsive) ──────────────────────────────────
+// FIX: Was a hard-coded GridView.count(crossAxisCount: 4) which
+// forced 4 columns regardless of screen width.  LayoutBuilder now
+// picks 2 or 4 columns based on available width, and the aspect
+// ratio is capped so cards never become uncomfortably tall.
 
 class _StatsGrid extends StatelessWidget {
-  final dynamic report; // DailyReport
-
+  final dynamic report;
   const _StatsGrid({required this.report});
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,##0.00', 'ar');
-    return GridView.count(
-      crossAxisCount: 4,
-      crossAxisSpacing: AppSpacing.md,
-      mainAxisSpacing: AppSpacing.md,
-      childAspectRatio: 2.2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: [
-        StatCard(
-          label: 'زيارات اليوم',
-          value: '${report.totalVisits}',
-          icon: Icons.local_hospital_outlined,
-          color: AppColors.primary,
-          subtitle: '${report.totalPatients} مريض',
-        ),
-        StatCard(
-          label: 'إجمالي الفواتير',
-          value: '${fmt.format(report.totalInvoiced)} ر.س',
-          icon: Icons.receipt_long_outlined,
-          color: AppColors.secondary,
-        ),
-        StatCard(
-          label: 'المحصّل اليوم',
-          value: '${fmt.format(report.totalCollected)} ر.س',
-          icon: Icons.payments_outlined,
-          color: AppColors.success,
-        ),
-        StatCard(
-          label: 'صافي الخزينة',
-          value: '${fmt.format(report.netCash)} ر.س',
-          icon: Icons.account_balance_wallet_outlined,
-          color: report.netCash >= 0 ? AppColors.primary : AppColors.error,
-        ),
-      ],
+    final cards = [
+      StatCard(
+        label: 'زيارات اليوم',
+        value: '${report.totalVisits}',
+        icon: Icons.local_hospital_outlined,
+        color: AppColors.primary,
+        subtitle: '${report.totalPatients} مريض',
+      ),
+      StatCard(
+        label: 'إجمالي الفواتير',
+        value: '${fmt.format(report.totalInvoiced)} $',
+        icon: Icons.receipt_long_outlined,
+        color: AppColors.secondary,
+      ),
+      StatCard(
+        label: 'المحصّل اليوم',
+        value: '${fmt.format(report.totalCollected)} $',
+        icon: Icons.payments_outlined,
+        color: AppColors.success,
+      ),
+      StatCard(
+        label: 'صافي الخزينة',
+        value: '${fmt.format(report.netCash)} $',
+        icon: Icons.account_balance_wallet_outlined,
+        color: report.netCash >= 0 ? AppColors.primary : AppColors.error,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossCount  = constraints.maxWidth < 600 ? 2 : 4;
+        final cellWidth   = (constraints.maxWidth - (crossCount - 1) * AppSpacing.md) / crossCount;
+        // Keep cards at a comfortable fixed height regardless of width
+        final aspectRatio = (cellWidth / 110).clamp(1.6, 3.0);
+
+        return GridView.count(
+          crossAxisCount: crossCount,
+          crossAxisSpacing: AppSpacing.md,
+          mainAxisSpacing: AppSpacing.md,
+          childAspectRatio: aspectRatio,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: cards,
+        );
+      },
+    );
+  }
+}
+
+// ─── Bottom Row ───────────────────────────────────────────────
+// FIX: Extracted to its own widget and made responsive.
+// On narrow windows the two cards stack vertically instead of
+// overflowing side-by-side.
+
+class _BottomRow extends StatelessWidget {
+  final dynamic cashBoxAsync;
+  final dynamic report;
+  const _BottomRow({required this.cashBoxAsync, required this.report});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 640) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _CashBoxCard(cashBoxAsync: cashBoxAsync, report: report),
+              const SizedBox(height: AppSpacing.md),
+              _DoctorStatsCard(report: report),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _CashBoxCard(cashBoxAsync: cashBoxAsync, report: report)),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: _DoctorStatsCard(report: report)),
+          ],
+        );
+      },
     );
   }
 }
@@ -130,7 +182,6 @@ class _StatsGrid extends StatelessWidget {
 class _CashBoxCard extends StatelessWidget {
   final dynamic cashBoxAsync;
   final dynamic report;
-
   const _CashBoxCard({required this.cashBoxAsync, required this.report});
 
   @override
@@ -144,19 +195,14 @@ class _CashBoxCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           cashBoxAsync.when(
             loading: () => const LoadingView(),
-            error: (e, _) => ErrorView(message: e.toString()),
+            error:   (e, _) => ErrorView(message: e.toString()),
             data: (box) => Column(
               children: [
-                _CashRow('الرصيد الافتتاحي', fmt.format(box.openingBalance), AppColors.textSecondary),
-                _CashRow('إجمالي الإيرادات', fmt.format(report.totalCollected), AppColors.success),
-                _CashRow('إجمالي المصروفات', fmt.format(report.totalExpenses), AppColors.error),
+                _CashRow('الرصيد الافتتاحي', fmt.format(box.openingBalance),                AppColors.textSecondary),
+                _CashRow('إجمالي الإيرادات', fmt.format(report.totalCollected),             AppColors.success),
+                _CashRow('إجمالي المصروفات', fmt.format(report.totalExpenses),              AppColors.error),
                 const Divider(height: AppSpacing.lg),
-                _CashRow(
-                  'الرصيد الختامي',
-                  fmt.format(box.calculatedClosingBalance),
-                  AppColors.primary,
-                  bold: true,
-                ),
+                _CashRow('الرصيد الختامي',   fmt.format(box.calculatedClosingBalance),      AppColors.primary, bold: true),
                 if (box.isClosed)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -176,7 +222,6 @@ class _CashRow extends StatelessWidget {
   final String value;
   final Color color;
   final bool bold;
-
   const _CashRow(this.label, this.value, this.color, {this.bold = false});
 
   @override
@@ -190,7 +235,7 @@ class _CashRow extends StatelessWidget {
                     color: bold ? AppColors.textPrimary : AppColors.textSecondary,
                     fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
                     fontSize: 14)),
-            Text('$value ر.س',
+            Text('$value $',
                 style: TextStyle(
                     color: color,
                     fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
@@ -204,7 +249,6 @@ class _CashRow extends StatelessWidget {
 
 class _DoctorStatsCard extends StatelessWidget {
   final dynamic report;
-
   const _DoctorStatsCard({required this.report});
 
   @override
@@ -251,7 +295,7 @@ class _DoctorRow extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.divider))),
+            border: Border(bottom: BorderSide(color: AppColors.divider))),
         child: Row(
           children: [
             Container(
@@ -267,7 +311,8 @@ class _DoctorRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text(name,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   Text('$visits زيارة',
                       style: const TextStyle(color: AppColors.textHint, fontSize: 12)),
                 ],
@@ -276,7 +321,7 @@ class _DoctorRow extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('$revenue ر.س',
+                Text('$revenue $',
                     style: const TextStyle(
                         color: AppColors.success, fontWeight: FontWeight.w700, fontSize: 14)),
                 Text('عمولة: $commission',
